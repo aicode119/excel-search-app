@@ -1,11 +1,13 @@
 import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:device_info_plus/device_info_plus.dart';
 
 class PermissionService {
   static Future<bool> requestStoragePermission() async {
     try {
-      // For Android 13+ (API 33+), we need different permissions
+      if (kIsWeb) return true; // Permissions not applicable for web
+
       if (await _isAndroid13OrHigher()) {
-        // Request media permissions for Android 13+
         final Map<Permission, PermissionStatus> statuses = await [
           Permission.photos,
           Permission.videos,
@@ -17,7 +19,6 @@ class PermissionService {
           status == PermissionStatus.limited
         );
       } else {
-        // For older Android versions
         final PermissionStatus status = await Permission.storage.request();
         return status == PermissionStatus.granted;
       }
@@ -29,6 +30,8 @@ class PermissionService {
 
   static Future<bool> checkStoragePermission() async {
     try {
+      if (kIsWeb) return true; // Permissions not applicable for web
+
       if (await _isAndroid13OrHigher()) {
         final PermissionStatus photoStatus = await Permission.photos.status;
         final PermissionStatus videoStatus = await Permission.videos.status;
@@ -51,11 +54,11 @@ class PermissionService {
   }
 
   static Future<bool> _isAndroid13OrHigher() async {
-    // This is a simplified check - in a real app you might want to use
-    // device_info_plus package for more accurate version detection
-    // For now, we'll return true to test the Android 13+ permission flow
-    // You might want to use Platform.isAndroid and check SDK version here
-    return false; 
+    if (kIsWeb) return false; // Not applicable for web
+
+    final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+    final AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+    return androidInfo.version.sdkInt >= 33;
   }
 
   static Future<void> openAppSettings() async {
