@@ -1,0 +1,74 @@
+workflows:
+  android-workflow:
+    name: Android Workflow
+    max_build_duration: 120
+    instance_type: mac_mini_m1
+    environment:
+      android_signing:
+        - keystore_reference
+      groups:
+        - google_play # <-- (Includes GCLOUD_SERVICE_ACCOUNT_CREDENTIALS)
+      vars:
+        PACKAGE_NAME: "com.wissam.excel_search_app"
+        GOOGLE_PLAY_TRACK: internal
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Set up local.properties
+        script: |
+          echo "flutter.sdk=$HOME/programs/flutter" > "$CM_BUILD_DIR/android/local.properties"
+      - name: Get Flutter packages
+        script: |
+          flutter packages pub get
+      - name: Flutter analyze
+        script: |
+          flutter analyze
+      - name: Flutter unit tests
+        script: |
+          flutter test
+        ignore_failure: true
+      - name: Build APK with Flutter
+        script: |
+          flutter build apk --release
+    artifacts:
+      - build/**/outputs/**/*.apk
+      - build/**/outputs/**/mapping.txt
+      - flutter_drive.log
+    publishing:
+      email:
+        recipients:
+          - user@example.com
+        notify:
+          success: true
+          failure: false
+
+  android-debug-workflow:
+    name: Android Debug Workflow
+    max_build_duration: 60
+    instance_type: mac_mini_m1
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Set up local.properties
+        script: |
+          echo "flutter.sdk=$HOME/programs/flutter" > "$CM_BUILD_DIR/android/local.properties"
+      - name: Get Flutter packages
+        script: |
+          flutter packages pub get
+      - name: Build Debug APK with Flutter
+        script: |
+          flutter build apk --debug
+    artifacts:
+      - build/**/outputs/**/*.apk
+      - flutter_drive.log
+    publishing:
+      email:
+        recipients:
+          - user@example.com
+        notify:
+          success: true
+          failure: false
+
